@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node relay.mjs",
+    "test": "node --test test-clipboard.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}

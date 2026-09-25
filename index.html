@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Общий текст</title>
+  <style>
+:root{color-scheme:dark;--bg:#111417;--panel:#191d21;--raised:#20252a;--line:#343a40;--strong:#596168;--text:#f5f7f8;--muted:#aab1b7;--lime:#d9ff43;--green:#42d887;--coral:#ff8d85}
+*{box-sizing:border-box;scrollbar-color:var(--strong) var(--panel)}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+::selection{background:var(--lime);color:var(--bg)}
+button,input,textarea{font:inherit}
+button{min-height:42px;padding:0 18px;border:1px solid var(--strong);border-radius:10px;cursor:pointer;font-weight:750;transition:background-color .15s,border-color .15s,color .15s}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid rgba(217,255,67,.4);outline-offset:2px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.primary{border-color:var(--lime);background:var(--lime);color:var(--bg)}
+.primary:hover:not(:disabled){background:#e5ff79}
+.secondary{background:transparent;color:var(--text)}
+.secondary:hover:not(:disabled){background:var(--raised);border-color:#747d84}
+.danger:hover:not(:disabled){border-color:var(--coral);color:var(--coral)}
+.app{width:100%;padding:32px clamp(12px,3vw,48px) 48px}
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:28px}
+h1{margin:0 0 8px;font-size:clamp(34px,5vw,56px);line-height:1;letter-spacing:-.035em}
+h2{margin:0 0 8px;font-size:18px;line-height:1.2}
+p{margin:0;color:var(--muted)}
+.page-header p{max-width:62ch}
+.connection{display:flex;gap:22px;flex-wrap:wrap;padding:10px 0;color:var(--muted);font-size:14px}
+.connection-label{display:flex;gap:8px;align-items:center;white-space:nowrap}
+.connection strong{color:var(--text);font-size:14px;font-weight:650}
+.connection strong[data-state="ok"]{color:var(--green)}
+.connection strong[data-state="error"]{color:var(--coral)}
+.connection strong[data-state="wait"]{color:var(--lime)}
+.setup,.pair-controls{padding:20px 22px;border:1px solid var(--line);border-radius:14px;background:var(--panel);margin-bottom:28px}
+.setup>p,.invite p{font-size:14px}
+.setup-actions{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-top:20px}
+.or{align-self:center;color:var(--muted)}
+.invite-label,.invite label,.slot label{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.invite-label{width:100%;margin-bottom:-7px}
+input,textarea{border:1px solid var(--strong);border-radius:9px;background:var(--bg);color:var(--text)}
+input{height:42px;padding:0 12px;min-width:0}
+#join-link{flex:1 1 280px}
+.pair-controls{display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.invite{flex:1 1 420px;min-width:0}
+.invite-row{display:flex;gap:12px;margin:8px 0 6px}
+#invite-link{flex:1;min-width:0;font:12px ui-monospace,SFMono-Regular,Consolas,monospace}
+.pair-actions{display:flex;gap:12px;flex-wrap:wrap;padding-top:24px}
+.message{width:100%;min-height:1.5em;color:var(--muted);font-size:14px}
+.message:empty{display:none}
+.message[data-state="error"],.slot-message[data-state="error"]{color:var(--coral)}
+.message[data-state="ok"],.slot-message[data-state="ok"]{color:var(--green)}
+.slots{display:grid;gap:16px}
+.slot{min-width:0;padding:14px 16px 12px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.slot-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.slot label{color:var(--muted)}
+.copy{min-width:116px}
+.copy[data-copied="true"]{background:var(--green);border-color:var(--green);color:#0b2819}
+textarea{display:block;width:100%;min-height:120px;padding:12px;resize:vertical;caret-color:var(--lime);line-height:1.5}
+textarea:focus{border-color:var(--lime)}
+textarea:disabled{opacity:.65}
+.slot-message{min-height:21px;margin-top:7px;font-size:14px}
+@media(max-width:640px){.app{padding:20px 10px 28px}.page-header{display:block}.connection{padding:14px 0 0;gap:8px 18px}.setup,.pair-controls{padding:16px;margin-bottom:16px}.setup-actions{align-items:stretch}.or{display:none}.setup-actions>.primary,.setup-actions>.secondary,#join-link{width:100%}.invite-row{flex-wrap:wrap}.invite-row>*{width:100%}.pair-actions{padding-top:0;width:100%}.pair-actions>*{flex:1}.slot{padding:12px}.slots{gap:12px}}
+@media(prefers-reduced-motion:reduce){button{transition:none}}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="page-header">
+      <div>
+        <h1>Общий текст</h1>
+        <p>Три поля для двух устройств. Вставьте текст здесь и скопируйте его на другом устройстве.</p>
+      </div>
+      <div class="connection" aria-live="polite">
+        <span class="connection-label">Релей <strong id="relay-status">Не подключён</strong></span>
+        <span class="connection-label">Пара <strong id="pair-status">Не создана</strong></span>
+      </div>
+    </header>
+
+    <section class="setup" id="setup" aria-labelledby="setup-title">
+      <h2 id="setup-title">Связать устройства</h2>
+      <p>Создайте ссылку на первом устройстве и откройте её на втором. Ссылка даёт доступ ко всем трём полям.</p>
+      <div class="setup-actions">
+        <button class="primary" id="create" type="button">Создать пару</button>
+        <span class="or">или</span>
+        <label class="invite-label" for="join-link">Вставить ссылку-приглашение или токен</label>
+        <input id="join-link" type="password" autocomplete="off" spellcheck="false" placeholder="Ссылка или токен">
+        <button class="secondary" id="join" type="button">Подключиться</button>
+      </div>
+      <p class="message" id="setup-message" role="status"></p>
+    </section>
+
+    <section class="pair-controls" id="pair-controls" hidden aria-label="Управление парой">
+      <div class="invite" id="invite">
+        <label for="invite-link" id="invite-title">Ссылка для второго устройства</label>
+        <div class="invite-row">
+          <input id="invite-link" type="text" readonly aria-describedby="invite-hint">
+          <button class="primary" id="copy-link" type="button">Копировать приглашение</button>
+        </div>
+        <p id="invite-hint">Передавайте ссылку только тому, с кем хотите делиться текстом.</p>
+      </div>
+      <div class="pair-actions">
+        <button class="secondary" id="pause" type="button">Пауза</button>
+        <button class="secondary danger" id="disconnect" type="button">Отключить пару</button>
+      </div>
+      <p class="message" id="pair-message" role="status"></p>
+    </section>
+
+    <section class="slots" aria-label="Общие текстовые поля">
+      <article class="slot">
+        <div class="slot-head"><label for="slot-1">Поле 1</label><button class="secondary copy" type="button" data-copy="0">Копировать</button></div>
+        <textarea id="slot-1" rows="5" spellcheck="false" placeholder="Введите или вставьте текст" disabled></textarea>
+        <p class="slot-message" id="slot-message-1" aria-live="polite"></p>
+      </article>
+      <article class="slot">
+        <div class="slot-head"><label for="slot-2">Поле 2</label><button class="secondary copy" type="button" data-copy="1">Копировать</button></div>
+        <textarea id="slot-2" rows="5" spellcheck="false" placeholder="Введите или вставьте текст" disabled></textarea>
+        <p class="slot-message" id="slot-message-2" aria-live="polite"></p>
+      </article>
+      <article class="slot">
+        <div class="slot-head"><label for="slot-3">Поле 3</label><button class="secondary copy" type="button" data-copy="2">Копировать</button></div>
+        <textarea id="slot-3" rows="5" spellcheck="false" placeholder="Введите или вставьте текст" disabled></textarea>
+        <p class="slot-message" id="slot-message-3" aria-live="polite"></p>
+      </article>
+    </section>
+  </main>
+  <script>
+const MAX_EVENT = 1024 * 1024;
+const encoder = new TextEncoder();
+const decoder = new TextDecoder('utf-8', { fatal: true });
+const $ = (id) => document.getElementById(id);
+const fields = [1, 2, 3].map((n) => $(`slot-${n}`));
+const slotMessages = [1, 2, 3].map((n) => $(`slot-message-${n}`));
+
+let token = null;
+let room = null;
+let key = null;
+const relayEndpoint = 'wss://dogmeet.ru/clipboard/relay';
+let socket = null;
+let joined = false;
+let paused = false;
+let blocked = false;
+let retryDelay = 500;
+let retryTimer = null;
+let sendQueue = Promise.resolve();
+let device = sessionStorage.getItem('clipboard-device');
+const generations = [0, 0, 0];
+const dirty = [false, false, false];
+const timers = [null, null, null];
+const lastSeq = [0, 0, 0];
+const pending = new Map();
+
+function randomHex(length) {
+  return Array.from(crypto.getRandomValues(new Uint8Array(length)), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function base64url(bytes) {
+  let binary = '';
+  for (let index = 0; index < bytes.length; index += 32768) binary += String.fromCharCode(...bytes.subarray(index, index + 32768));
+  return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+}
+
+function bytesFromBase64url(value) {
+  const raw = atob(value.replaceAll('-', '+').replaceAll('_', '/') + '='.repeat((4 - value.length % 4) % 4));
+  return Uint8Array.from(raw, (character) => character.charCodeAt(0));
+}
+
+function setStatus(id, value, state = '') {
+  const element = $(id);
+  element.textContent = value;
+  element.dataset.state = state;
+}
+
+function message(element, value, state = '') {
+  element.textContent = value;
+  element.dataset.state = state;
+}
+
+function updateControls() {
+  $('setup').hidden = Boolean(token);
+  $('pair-controls').hidden = !token;
+  $('pause').textContent = paused ? 'Возобновить' : 'Пауза';
+  fields.forEach((field) => { field.disabled = !token || paused || blocked; });
+}
+
+function parseToken(value) {
+  const trimmed = value.trim();
+  let candidate = trimmed;
+  if (trimmed.includes('#')) {
+    const url = new URL(trimmed);
+    if (url.origin !== location.origin || !['/', '/clipboard/', '/clipboard/index.html', '/clipboard.html'].includes(url.pathname)) {
+      throw new Error('Откройте ссылку именно на этом сайте.');
+    }
+    candidate = new URLSearchParams(url.hash.slice(1)).get('pair') || '';
+  }
+  if (!/^[A-Za-z0-9_-]{43}$/.test(candidate) || bytesFromBase64url(candidate).length !== 32) {
+    throw new Error('Ссылка-приглашение недействительна.');
+  }
+  return candidate;
+}
+
+async function deriveKeys(secret) {
+  const material = await crypto.subtle.importKey('raw', bytesFromBase64url(secret), 'HKDF', false, ['deriveBits', 'deriveKey']);
+  const salt = encoder.encode('headers shared text v1');
+  const roomBits = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt, info: encoder.encode('room') }, material, 256);
+  const contentKey = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt, info: encoder.encode('content') }, material, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  return { roomId: Array.from(new Uint8Array(roomBits), (byte) => byte.toString(16).padStart(2, '0')).join(''), contentKey };
+}
+
+async function activate(secret, created = false) {
+  if (!isSecureContext || !crypto.subtle) throw new Error('Нужен HTTPS для защищённого обмена.');
+  const derived = await deriveKeys(secret);
+  stopSocket();
+  token = secret;
+  room = derived.roomId;
+  key = derived.contentKey;
+  blocked = false;
+  paused = false;
+  retryDelay = 500;
+  pending.clear();
+  fields.forEach((field, index) => {
+    field.value = '';
+    dirty[index] = false;
+    generations[index] = 0;
+    lastSeq[index] = 0;
+    message(slotMessages[index], '');
+  });
+  history.replaceState(null, '', `${location.pathname}${location.search}#pair=${secret}`);
+  $('invite-link').value = location.href;
+  $('invite').hidden = !created;
+  $('invite-title').textContent = 'Ссылка для второго устройства';
+  $('invite-hint').textContent = 'Передавайте ссылку только тому, с кем хотите делиться текстом.';
+  message($('pair-message'), '');
+  setStatus('pair-status', 'Подключаемся…', 'wait');
+  updateControls();
+  connect();
+}
+
+function stopSocket() {
+  clearTimeout(retryTimer);
+  retryTimer = null;
+  if (socket) {
+    const old = socket;
+    socket = null;
+    old.close();
+  }
+  joined = false;
+}
+
+function retry() {
+  if (!token || paused) return;
+  const seconds = Math.max(1, Math.ceil(retryDelay / 1000));
+  setStatus('relay-status', `Повтор через ${seconds} с`, 'error');
+  setStatus('pair-status', blocked ? 'Пара занята' : 'Нет связи с релеем', 'error');
+  retryTimer = setTimeout(connect, retryDelay);
+  retryDelay = Math.min(retryDelay * 2, 8000);
+}
+
+function connect() {
+  if (!token || paused || socket) return;
+  setStatus('relay-status', 'Подключаемся…', 'wait');
+  const ws = new WebSocket(relayEndpoint);
+  socket = ws;
+  let incoming = Promise.resolve();
+  ws.addEventListener('open', () => {
+    if (socket === ws) ws.send(JSON.stringify({ type: 'join', room, device }));
+  });
+  ws.addEventListener('message', (event) => {
+    incoming = incoming.then(() => handleMessage(ws, JSON.parse(event.data))).catch(() => {
+      message($('pair-message'), 'Не удалось прочитать зашифрованное обновление.', 'error');
+    });
+  });
+  ws.addEventListener('close', (event) => {
+    if (socket !== ws) return;
+    socket = null;
+    joined = false;
+    pending.clear();
+    if (event.code === 1009) message($('pair-message'), 'Событие превышает 1 МиБ.', 'error');
+    retry();
+  });
+  ws.addEventListener('error', () => {
+    if (socket === ws) setStatus('relay-status', 'Ошибка соединения', 'error');
+  });
+}
+
+async function decryptUpdate(update) {
+  if (!Number.isInteger(update.slot) || update.slot < 0 || update.slot > 2 || !Number.isSafeInteger(update.seq) || update.seq < 1) throw new Error('Invalid update');
+  const aad = encoder.encode(`${room}:${update.slot}:${update.event}`);
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: bytesFromBase64url(update.iv), additionalData: aad }, key, bytesFromBase64url(update.data));
+  const payload = JSON.parse(decoder.decode(plain));
+  if (typeof payload.text !== 'string') throw new Error('Invalid text');
+  return payload.text;
+}
+
+async function applyUpdate(update) {
+  const index = update.slot;
+  if (update.seq <= lastSeq[index]) return;
+  const text = await decryptUpdate(update);
+  lastSeq[index] = update.seq;
+  const own = pending.get(update.event);
+  if (own) {
+    pending.delete(update.event);
+    if (own.generation === generations[index]) dirty[index] = false;
+  }
+  if (!dirty[index]) fields[index].value = text;
+}
+
+async function handleMessage(ws, data) {
+  if (socket !== ws) return;
+  if (data.type === 'error') {
+    if (data.code === 'full') {
+      blocked = true;
+      setStatus('relay-status', 'Доступ отклонён', 'error');
+      setStatus('pair-status', 'Пара занята', 'error');
+      message($('pair-message'), 'К паре сейчас подключены два устройства. Повторим попытку после освобождения места.', 'error');
+      updateControls();
+    } else {
+      message($('pair-message'), 'Релей отклонил сообщение.', 'error');
+    }
+    ws.close();
+  } else if (data.type === 'snapshot' && Array.isArray(data.slots)) {
+    for (const update of data.slots) if (update) await applyUpdate(update);
+    joined = true;
+    blocked = false;
+    updateControls();
+    retryDelay = 500;
+    setStatus('relay-status', 'Подключён', 'ok');
+    message($('pair-message'), '');
+    for (let index = 0; index < 3; index++) if (dirty[index]) sendSlot(index);
+  } else if (data.type === 'presence') {
+    setStatus('pair-status', data.peers === 1 ? 'Два устройства' : 'Ожидаем устройство', data.peers === 1 ? 'ok' : 'wait');
+  } else if (data.type === 'update') {
+    await applyUpdate(data);
+  }
+}
+
+function sendSlot(index) {
+  clearTimeout(timers[index]);
+  if (!joined || !socket || paused || blocked || !dirty[index]) return;
+  sendQueue = sendQueue.then(async () => {
+    if (!joined || !socket || !dirty[index]) return;
+    const generation = generations[index];
+    const event = randomHex(16);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const plain = encoder.encode(JSON.stringify({ text: fields[index].value }));
+    const aad = encoder.encode(`${room}:${index}:${event}`);
+    const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: aad }, key, plain);
+    const packet = JSON.stringify({ type: 'update', slot: index, event, iv: base64url(iv), data: base64url(new Uint8Array(ciphertext)) });
+    if (encoder.encode(packet).length > MAX_EVENT) {
+      message(slotMessages[index], 'Слишком большой текст: предел события 1 МиБ. Поле не отправлено.', 'error');
+      return;
+    }
+    if (joined && socket?.readyState === WebSocket.OPEN) {
+      pending.set(event, { generation });
+      socket.send(packet);
+    }
+  }).catch(() => message(slotMessages[index], 'Не удалось зашифровать текст. Попробуйте ещё раз.', 'error'));
+}
+
+fields.forEach((field, index) => {
+  field.addEventListener('input', () => {
+    generations[index]++;
+    dirty[index] = true;
+    message(slotMessages[index], '');
+    clearTimeout(timers[index]);
+    timers[index] = setTimeout(() => sendSlot(index), 180);
+  });
+});
+
+document.querySelectorAll('[data-copy]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const index = Number(button.dataset.copy);
+    try {
+      await navigator.clipboard.writeText(fields[index].value);
+      button.textContent = 'Скопировано';
+      button.dataset.copied = 'true';
+      message(slotMessages[index], 'Точный текст скопирован.', 'ok');
+      setTimeout(() => { button.textContent = 'Копировать'; delete button.dataset.copied; }, 1800);
+    } catch {
+      message(slotMessages[index], 'Браузер запретил копирование. Разрешите доступ к буферу и повторите.', 'error');
+    }
+  });
+});
+
+$('copy-link').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('invite-link').value);
+    message($('pair-message'), 'Приглашение скопировано.', 'ok');
+  } catch {
+    message($('pair-message'), 'Браузер запретил копирование. Выделите приглашение и скопируйте вручную.', 'error');
+  }
+});
+
+$('create').addEventListener('click', async () => {
+  try { await activate(base64url(crypto.getRandomValues(new Uint8Array(32))), true); }
+  catch (error) { message($('setup-message'), error.message, 'error'); }
+});
+
+$('join').addEventListener('click', async () => {
+  try { await activate(parseToken($('join-link').value)); }
+  catch (error) { message($('setup-message'), error.message, 'error'); }
+});
+
+$('join-link').addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') $('join').click();
+});
+
+$('pause').addEventListener('click', () => {
+  paused = !paused;
+  if (paused) {
+    timers.forEach(clearTimeout);
+    stopSocket();
+    setStatus('relay-status', 'Пауза', 'wait');
+    setStatus('pair-status', 'Синхронизация на паузе', 'wait');
+  } else {
+    connect();
+  }
+  updateControls();
+});
+
+$('disconnect').addEventListener('click', () => {
+  if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'leave' }));
+  stopSocket();
+  token = room = key = null;
+  paused = blocked = false;
+  pending.clear();
+  timers.forEach(clearTimeout);
+  fields.forEach((field, index) => { field.value = ''; dirty[index] = false; message(slotMessages[index], ''); });
+  sessionStorage.removeItem('clipboard-device');
+  device = randomHex(16);
+  sessionStorage.setItem('clipboard-device', device);
+  history.replaceState(null, '', `${location.pathname}${location.search}`);
+  $('join-link').value = '';
+  setStatus('relay-status', 'Не подключён');
+  setStatus('pair-status', 'Не создана');
+  updateControls();
+});
+
+if (!device || !/^[0-9a-f]{32}$/.test(device)) {
+  device = randomHex(16);
+  sessionStorage.setItem('clipboard-device', device);
+}
+if (location.hash) {
+  try { activate(parseToken(location.href)).catch((error) => message($('setup-message'), error.message, 'error')); }
+  catch (error) { message($('setup-message'), error.message, 'error'); }
+}
+  </script>
+</body>
+</html>

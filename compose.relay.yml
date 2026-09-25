@@ -1,0 +1,26 @@
+name: clipboard
+services:
+  relay:
+    build: .
+    image: clipboard-relay:latest
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 128m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      HOST: 0.0.0.0
+      PORT: 18787
+      FRONTEND_ORIGIN: https://kuzaqa.github.io
+    networks:
+      dogmeet:
+        aliases: [clipboard-relay]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18787/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+networks:
+  dogmeet:
+    external: true
+    name: dogmeet_default
