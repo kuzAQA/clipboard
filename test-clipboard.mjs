@@ -160,3 +160,49 @@ test('pair, three slots, encrypted snapshots, limits and reconnect', async () =>
     await new Promise((resolve) => relay.server.close(resolve));
   }
 });
+
+test('isolates sessions and rejects updates from a replaced connection', async () => {
+  const relay = createRelayServer(FRONTEND_ORIGIN);
+  relay.server.listen(0, '127.0.0.1');
+  await once(relay.server, 'listening');
+  const base = `http://127.0.0.1:${relay.server.address().port}`;
+  const first = await keys(randomBytes(32));
+  const second = await keys(randomBytes(32));
+  const device = randomBytes(16).toString('hex');
+  const old = await client(base);
+  const current = await client(base);
+  const isolated = await client(base);
+
+  try {
+    old.ws.send(JSON.stringify({ type: 'join', room: first.room, device }));
+    await old.next('snapshot');
+    const staleConnection = [...relay.wss.clients].find((member) => member.device === device);
+
+    const oldClosed = once(old.ws, 'close');
+    current.ws.send(JSON.stringify({ type: 'join', room: first.room, device }));
+    await current.next('snapshot');
+    await oldClosed;
+
+    isolated.ws.send(JSON.stringify({ type: 'join', room: second.room, device: randomBytes(16).toString('hex') }));
+    await isolated.next('snapshot');
+    const update = await encrypted(second.room, second.key, 0, 'другая сессия');
+    let leaked = false;
+    const detectLeak = (raw) => {
+      const message = JSON.parse(raw.toString());
+      if (message.type === 'update' && message.event === update.event) leaked = true;
+    };
+    current.ws.on('message', detectLeak);
+    isolated.ws.send(JSON.stringify(update));
+    assert.equal(await plaintext(second.room, second.key, await isolated.next('update')), 'другая сессия');
+    await new Promise((resolve) => setImmediate(resolve));
+    current.ws.off('message', detectLeak);
+    assert.equal(leaked, false);
+
+    staleConnection.emit('message', Buffer.from(JSON.stringify(await encrypted(first.room, first.key, 0, 'устаревшее'))), false);
+    assert.equal(relay.rooms.get(first.room).seq, 0);
+    assert.equal(relay.rooms.get(second.room).seq, 1);
+  } finally {
+    for (const ws of relay.wss.clients) ws.terminate();
+    await new Promise((resolve) => relay.server.close(resolve));
+  }
+});

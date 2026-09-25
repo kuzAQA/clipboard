@@ -77,7 +77,7 @@ export function createRelayServer(frontendOrigin = process.env.FRONTEND_ORIGIN) 
         presence(room);
         return;
       }
-      if (!client.room) return client.close(1008);
+      if (!client.room || client.room.members.get(client.device) !== client) return client.close(1008);
       if (data?.type === 'leave') {
         detach(client, true);
         return client.close(1000);
